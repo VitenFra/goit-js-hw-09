@@ -1,34 +1,48 @@
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
-import Notiflix from 'notiflix';
+const refs = {
+  delay: document.querySelector('input[name="delay"]'),
+  step: document.querySelector('input[name="step"]'),
+  amount: document.querySelector('input[name="amount"]'),
+  form: document.querySelector('.form'),
+};
 
-const formRefer = document.querySelector('.form');
-const delayRefer = document.querySelector('[name="delay"]');
-const stepRefer = document.querySelector('[name="step"]');
-const amountRefer = document.querySelector('[name="amount"]');
+refs.form.addEventListener('submit', onFormSubmit);
 
-const createPromise = (position, delay) => {
+function onFormSubmit(e) {
+  e.preventDefault();
+  const data = {
+    amount: parseInt(refs.amount.value),
+    step: parseInt(refs.step.value),
+    delay: parseInt(refs.delay.value),
+  };
+  appPromMaking(data);
+}
+
+function appPromMaking({amount, step, delay}) {
+  let calculatedDelay = delay;
+  for (let index = 1; index <= amount; index += 1){
+    makingProm(index, calculatedDelay)
+      .then(({ position, delay }) => {
+        Notify.success(` Fulfilled promise ${position} in ${delay}ms`);
+      })
+      .catch(({ position, delay }) => {
+        Notify.failure(` Rejected promise ${position} in ${delay}ms`);
+      });
+    calculatedDelay += step;
+  }
+}
+
+function makingProm(position, delay) {
+  const shouldResolve = Math.random() > 0.3;
+
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const shouldResolve = Math.random() > 0.3;
       if (shouldResolve) {
-        resolve(Notiflix.Notify.success(`Fulfilled promise ${position} in ${delay}ms`));
+        resolve({ position: position, delay: delay });
       } else {
-        reject(Notiflix.Notify.failure(` Rejected promise ${position} in ${delay}ms`));
+        reject({ position: position, delay: delay });
       }
     }, delay);
   });
-};
-const onSubmitInput = Elem => {
-  Elem.preventDefault();
-  let delay = Number(delayRefer.value);
-  const step = Number(stepRefer.value);
-  const amount = Number(amountRefer.value);
-  for (let i = 0; i < amount; i += 1) {
-    createPromise(i + 1, delay)
-      .then(({ position, delay }) => console.log(`Fulfilled promise ${position} in ${delay}ms`))
-      .catch(({ position, delay }) => console.log(`Rejected promise ${position} in ${delay}ms`));
-    delay += step;
-  }
-};
-
-formRefer.addEventListener('submit', onSubmitInput);
+}
